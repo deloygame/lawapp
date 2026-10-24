@@ -1,0 +1,24 @@
+:root{--ac:#3b82f6;--ac2:#6366f1;--bg:#eef2fb;--card:#fff;--tx:#16202e;--mut:#7b879a;--bd:#e3e7ef;--inp:#f3f5fa}
+[data-theme=dark]{--bg:#0e141f;--card:#161f2d;--tx:#e8edf5;--mut:#8896aa;--bd:#243145;--inp:#1e2939}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Inter,system-ui,sans-serif;background:radial-gradient(circle at 20% 0,rgba(99,102,241,.25),transparent 50%),var(--bg);color:var(--tx);display:flex;justify-content:center;align-items:center;min-height:100dvh;padding:20px}
+.card{background:var(--card);padding:30px;border-radius:22px;width:100%;max-width:430px;border:1px solid var(--bd);box-shadow:0 20px 50px -20px rgba(30,40,90,.35)}
+.logo{width:64px;height:64px;margin:0 auto 12px;border-radius:20px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,var(--ac),var(--ac2))}
+h2{text-align:center;margin-bottom:6px}
+.sub{font-size:13px;color:var(--mut);text-align:center;margin-bottom:18px;line-height:1.5}
+label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin:14px 0 5px}
+input,select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--bd);font-size:16px;background:var(--inp);color:var(--tx);outline:none}
+input:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+button.go,button.alt{width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer}
+button.go{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}
+button.alt{background:var(--inp);color:var(--tx);margin-top:10px}
+button:disabled{opacity:.6}
+#m{margin-top:14px;font-size:13px;text-align:center;font-weight:600;min-height:18px;line-height:1.5}
+.links{text-align:center;margin-top:16px;font-size:13px;color:var(--mut)}
+.links a{color:var(--ac);font-weight:600;text-decoration:none;cursor:pointer}
+.hint{font-size:11.5px;color:var(--mut);margin-top:4px}
+.rules{max-height:210px;overflow:auto;border:1px solid var(--bd);border-radius:12px;padding:12px 14px 12px 30px;font-size:13px;line-height:1.5;background:var(--inp);margin-top:4px}
+.rules.full{max-height:none;font-size:14.5px;padding-left:34px}
+.rules li{margin-bottom:8px}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:13.5px;color:var(--tx);font-weight:600;cursor:pointer}
+.chk input{width:22px;height:22px;margin-top:0;flex-shrink:0;accent-color:var(--ac)}

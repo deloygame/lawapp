@@ -1,0 +1,60 @@
+/* LawApp onboarding: white paper, ballpoint-blue ink. Light by default; dark if the user picks it in settings. */
+:root{--bg:#fff;--ink:#0e1020;--mut:#6a7086;--line:#e3e6ef;--ac:#2540d9;--acs:#eef1ff;--red:#d42b48;--ok:#1d7f4e;--r:28px}
+[data-theme=dark]{--bg:#0a0b10;--ink:#f1f2f6;--mut:#8b90a3;--line:#23262f;--ac:#6f86ff;--acs:#161a2e;--red:#ff6b82;--ok:#4fcf8d}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+#app{min-height:100dvh}
+.scr{max-width:440px;min-height:100dvh;margin:0 auto;display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top)) 24px calc(22px + env(safe-area-inset-bottom));animation:in .22s ease-out}
+@keyframes in{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.tb{display:flex;align-items:center;gap:14px;min-height:44px;margin-bottom:22px}
+.bk{width:40px;height:40px;margin-left:-10px;border:0;border-radius:50%;background:none;font-size:22px;color:var(--ink);flex-shrink:0}
+.bk:hover{background:var(--acs)}
+.prog{flex:1;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--ac);border-radius:2px;transition:width .3s}
+h1{font-size:30px;line-height:1.15;letter-spacing:-.025em;font-weight:760}
+.sub{margin-top:10px;font-size:15px;line-height:1.5;color:var(--mut)}
+.bd{margin-top:30px;display:flex;flex-direction:column;gap:20px}
+.fld{display:block}
+.fld span{display:block;font-size:13px;font-weight:600;color:var(--mut);margin-bottom:4px}
+.fld input{width:100%;border:0;border-bottom:2px solid var(--line);background:none;padding:8px 0 10px;font-size:21px;outline:none;border-radius:0;transition:border-color .15s}
+.fld input:focus{border-color:var(--ac)}
+.fld input::placeholder{color:var(--line)}
+.hint{font-size:13.5px;color:var(--mut);margin-top:-10px;min-height:18px}
+.hint.good{color:var(--ok)}.hint.bad{color:var(--red)}
+.msg{margin-top:14px;min-height:20px;font-size:14px;font-weight:600;line-height:1.45;color:var(--red)}
+.msg.ok{color:var(--ac)}
+.ft{margin-top:auto;padding-top:20px;display:flex;flex-direction:column;gap:10px}
+.pri,.sec{height:54px;border-radius:27px;border:0;font-size:16px;font-weight:700;transition:transform .1s,opacity .15s}
+.pri{background:var(--ac);color:#fff}
+.sec{background:var(--acs);color:var(--ac)}
+.pri:active,.sec:active{transform:scale(.98)}
+.pri:disabled{opacity:.45;cursor:default}
+.pri.ld{animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.55}}
+.lk{border:0;background:none;color:var(--ac);font-size:14.5px;font-weight:600;padding:10px;text-align:center;text-decoration:none}
+.alts{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:1px solid var(--line);background:var(--acs);border-radius:18px;padding:12px 16px;text-align:left}
+.chip span{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip b{font-size:13px;color:var(--ac);white-space:nowrap}
+.pts{display:flex;flex-direction:column}
+.pt{padding:13px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+.pt:first-child{border-top:0;padding-top:0}
+.pt b{font-size:15px}.pt span{font-size:14px;line-height:1.45;color:var(--mut)}
+.chk{display:flex;gap:12px;align-items:flex-start;font-size:14.5px;font-weight:600;line-height:1.4;cursor:pointer}
+.chk input{width:22px;height:22px;flex-shrink:0;accent-color:var(--ac);margin-top:1px}
+.pv{width:140px;height:140px;margin:6px auto 0;border:0;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--acs);color:var(--ac);font-size:56px;font-weight:700}
+.pv img{width:100%;height:100%;object-fit:cover}
+/* welcome: the logo is drawn once, like a pen stroke (the sketch the brand comes from) */
+.wl .wm{margin:auto 0;display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding-top:12vh}
+.wl h1{font-size:46px;letter-spacing:-.035em}
+.lg{display:inline-block;color:var(--ac)}
+.lg.big svg{width:92px;height:92px}
+.logo path{stroke-dasharray:100;stroke-dashoffset:100;animation:draw .9s ease-out .15s forwards}
+.logo path+path{animation-delay:.85s;animation-duration:.5s}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.logo path{animation:none;stroke-dashoffset:0}.scr{animation:none}.pri.ld{animation:none}}
+@media(min-width:700px){.scr{padding-top:60px;padding-bottom:40px;min-height:auto;margin-top:6vh;border:1px solid var(--line);border-radius:32px;min-height:640px}}

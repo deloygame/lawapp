@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.gstatic.com https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3b82f6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Məktəb-Lisey — E-poçt təsdiqi</title>
+<script src="theme.js"></script>
+<link rel="stylesheet" href="auth.css">
+</head>
+<body>
+<div class="card">
+  <div class="logo">✉️</div>
+  <h2>E-poçtunuzu təsdiqləyin</h2>
+  <p class="sub"><b id="em"></b> ünvanına təsdiq linki göndərdik. Linkə klikləyin (spam qovluğuna da baxın), sonra bu səhifə avtomatik davam edəcək.</p>
+  <button class="go" id="chk">Təsdiq etdim</button>
+  <button class="alt" id="rs">Linki yenidən göndər</button>
+  <button class="alt" id="out">Çıxış</button>
+  <div id="m"></div>
+</div>
+<script type="module" src="verify.js"></script>
+</body>
+</html>
