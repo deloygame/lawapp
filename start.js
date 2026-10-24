@@ -49,7 +49,9 @@ function welcome() {
   const s = h('section', 'scr wl'), mid = h('div', 'wm'), ft = h('div', 'ft');
   const reg_ = h('button', 'pri', 'Hesab yarat'), log = h('button', 'sec', 'Daxil ol'); reg_.type = log.type = 'button';
   reg_.onclick = regConsent; log.onclick = () => loginId();
-  mid.append(logo('lg big'), h('h1', null, 'LawApp'), h('p', 'sub', 'Yaz, paylaş, kəşf et. Şəxsi söhbətlərin yalnız sənə və qarşı tərəfə görünür.'));
+  const l3 = h('div', 'l3d'); l3.append(logo('lg big'));   // flat logo first; replaced by the 3D one as soon as it is ready
+  import('./logo3d.js').then(m => m.mountLogo3D(l3)).catch(() => {});
+  mid.append(l3, h('h1', null, 'LawApp'), h('p', 'sub', 'Yaz, paylaş, kəşf et. Şəxsi söhbətlərin yalnız sənə və qarşı tərəfə görünür.'));
   ft.append(reg_, log); s.append(mid, ft); root.replaceChildren(s);
 }
 
