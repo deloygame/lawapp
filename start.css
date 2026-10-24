@@ -57,4 +57,12 @@ h1{font-size:30px;line-height:1.15;letter-spacing:-.025em;font-weight:760}
 .logo path+path{animation-delay:.85s;animation-duration:.5s}
 @keyframes draw{to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){.logo path{animation:none;stroke-dashoffset:0}.scr{animation:none}.pri.ld{animation:none}}
-@media(min-width:700px){.scr{padding-top:60px;padding-bottom:40px;min-height:auto;margin-top:6vh;border:1px solid var(--line);border-radius:32px;min-height:640px}}
+/* the 3D logo */
+.l3d{width:min(300px,78vw);height:min(250px,32dvh);margin:0 auto -4px;display:flex;align-items:center;justify-content:center}
+.l3d-cv{width:100%;height:100%;display:block;outline:none}
+.wl .wm{padding-top:0;align-items:center;text-align:center}
+/* desktop: a card that always fits the window */
+@media(min-width:700px){
+  #app{min-height:100dvh;display:grid;place-items:center;padding:24px 0}
+  .scr{width:440px;min-height:0;height:min(680px,calc(100dvh - 48px));overflow-y:auto;padding-top:28px;padding-bottom:28px;border:1px solid var(--line);border-radius:32px}
+}
