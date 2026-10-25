@@ -1,0 +1,151 @@
+// LawApp mascot: a squishy jelly chat-bubble creature ("Lawy").
+// Looks at your cursor, blinks, waves, hops. Tap it: it jumps, squints happily and sends hearts. Drag to turn it.
+// Without WebGL the flat logo stays.
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+
+const BLUE = 0x5b79ff, BLUE_D = 0x3650e6, BELLY = 0xeaf0ff, PINK = 0xff8fb3, INK = 0x12152a;
+const A = 1.25, B = 1.1875, C = 1.15, CY = 1.19;   // body ellipsoid radii and centre height (feet stand on y = 0)
+
+const jelly = (color, extra = {}) => new THREE.MeshPhysicalMaterial({ color, roughness: .36, metalness: 0, clearcoat: 1, clearcoatRoughness: .22, sheen: .7, sheenRoughness: .45, sheenColor: new THREE.Color(0xc4d3ff), envMapIntensity: .6, ...extra });
+const matte = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: .6, metalness: 0, envMapIntensity: .4, ...extra });
+const gloss = color => new THREE.MeshPhysicalMaterial({ color, roughness: .12, metalness: .1, clearcoat: 1, clearcoatRoughness: .05, envMapIntensity: .9 });
+const surfZ = (x, y) => C * Math.sqrt(Math.max(0, 1 - (x / A) ** 2 - (y / B) ** 2));   // front of the body at (x, y) relative to its centre
+const ellipsoid = (r, sx, sy, sz, mat) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), mat); m.scale.set(sx, sy, sz); return m; };
+
+function heartTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+  g.fillStyle = '#ff6f9f'; g.beginPath(); g.moveTo(32, 56); g.bezierCurveTo(4, 36, 8, 8, 32, 20); g.bezierCurveTo(56, 8, 60, 36, 32, 56); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(20, 22, 5, 3, -.6, 0, 7); g.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function shadowTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), r = g.createRadialGradient(64, 64, 4, 64, 64, 62);
+  r.addColorStop(0, 'rgba(40,50,110,.42)'); r.addColorStop(1, 'rgba(40,50,110,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+}
+
+export function mountLogo3D(box) {
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' }); } catch { return () => {}; }
+  const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 1, .1, 60);
+  cam.position.set(0, 2.0, 9.6); cam.lookAt(0, 1.5, 0);
+  const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(renderer), .04).texture;
+  const key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(3, 6, 6); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x9fb2ff, 1.1); rim.position.set(-5, 3, -4); scene.add(rim);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xaab8ff, .5));
+
+  const root = new THREE.Group(), sq = new THREE.Group(), turn = new THREE.Group();   // root: hop height · sq: squash and stretch from the feet · turn: head/body rotation
+  scene.add(root); root.add(sq); sq.add(turn);
+
+  // ground shadow
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), new THREE.MeshBasicMaterial({ map: shadowTexture(), transparent: true, depthWrite: false }));
+  shadow.rotation.x = -Math.PI / 2; shadow.position.y = .005; scene.add(shadow);
+
+  // body, belly, tail
+  const bodyMat = jelly(BLUE), body = ellipsoid(A, 1, B / A, C / A, bodyMat); body.position.y = CY; turn.add(body);
+  const belly = ellipsoid(1, .6, .5, .2, matte(BELLY, { roughness: .8 })); belly.position.set(0, CY - .55, surfZ(0, -.55) - .1); turn.add(belly);
+  const L = new THREE.Shape(); [[-.2, .27], [-.08, .27], [-.08, -.08], [.2, -.08], [.2, -.2], [-.2, -.2]].forEach(([x, y], i) => i ? L.lineTo(x, y) : L.moveTo(x, y));
+  const lm = new THREE.Mesh(new THREE.ExtrudeGeometry(L, { depth: .05, bevelEnabled: true, bevelThickness: .02, bevelSize: .02, bevelSegments: 3 }), jelly(BLUE_D)); lm.position.set(-.02, CY - .55, belly.position.z + .19); turn.add(lm);
+  const tailPts = [[0, -.42], [.05, -.4], [.12, -.34], [.2, -.2], [.27, 0], [.3, .2], [.3, .35], [0, .35]].map(([x, y]) => new THREE.Vector2(x, y));
+  const tail = new THREE.Mesh(new THREE.LatheGeometry(tailPts, 32), jelly(BLUE)); tail.position.set(-.95, CY - .8, .05); tail.rotation.z = -.9; turn.add(tail);
+
+  // face: big glossy eyes with two highlights, blush, little mouth
+  const eyes = [], eyeMat = gloss(INK);
+  [-1, 1].forEach(s => {
+    const x = s * .44, y = .24, e = new THREE.Group(), ball = ellipsoid(.28, 1, 1.32, .55, eyeMat);
+    const glow = ellipsoid(.17, 1, .55, .3, matte(0x6d8bff, { emissive: 0x3a55ff, emissiveIntensity: .5 })); glow.position.set(0, -.14, .1);
+    const h1 = new THREE.Mesh(new THREE.SphereGeometry(.09, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff })), h2 = new THREE.Mesh(new THREE.SphereGeometry(.042, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    h1.position.set(.08 * s * -1 + .04, .17, .15); h2.position.set(-.08 * s * -1 - .03, -.1, .15); e.add(ball, glow, h1, h2);
+    e.position.set(x, CY + y, surfZ(x, y) - .06); e.rotation.y = Math.atan2(x, surfZ(x, y)) * .8; e.userData = { x, y }; turn.add(e); eyes.push(e);
+  });
+  const cheeks = [-1, 1].map(s => {
+    const x = s * .84, y = -.1, m = ellipsoid(.19, 1, .68, .2, new THREE.MeshStandardMaterial({ color: PINK, roughness: .7, transparent: true, opacity: .7 }));
+    m.position.set(x, CY + y, surfZ(x, y) - .03); m.rotation.y = Math.atan2(x, surfZ(x, y)) * .9; turn.add(m); return m;
+  });
+  const smile = new THREE.Mesh(new THREE.TorusGeometry(.12, .026, 10, 24, Math.PI), matte(INK, { roughness: .4 })); smile.rotation.z = Math.PI; smile.position.set(0, CY - .02, surfZ(0, -.02) - .02); turn.add(smile);
+  const open = new THREE.Group(), mouth = ellipsoid(.2, 1.15, .9, .4, matte(INK, { roughness: .4 })), tongue = ellipsoid(.12, 1.1, .6, .3, matte(0xff6f93, { roughness: .5 })); tongue.position.set(0, -.09, .1); open.add(mouth, tongue);
+  open.position.set(0, CY - .04, surfZ(0, -.04) - .04); open.visible = false; turn.add(open);
+
+  // arms (pivot at the shoulder), feet, antenna
+  const arms = [-1, 1].map(s => { const g = new THREE.Group(), a = new THREE.Mesh(new THREE.CapsuleGeometry(.16, .34, 8, 16), jelly(BLUE)); a.position.y = -.26; g.add(a); g.position.set(s * 1.13, CY - .1, .1); g.userData = { s }; turn.add(g); return g; });
+  [-1, 1].forEach(s => { const f = ellipsoid(.3, 1, .55, 1.15, jelly(BLUE_D)); f.position.set(s * .5, .14, .36); sq.add(f); });
+  const ant = new THREE.Group(); ant.position.set(.05, CY + B - .08, 0);
+  const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0), new THREE.Vector3(.06, .3, 0), new THREE.Vector3(.2, .55, .04), new THREE.Vector3(.34, .66, .06)]);
+  ant.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 20, .035, 8, false), jelly(BLUE_D)));
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(.13, 24, 18), matte(PINK, { emissive: 0xff5c93, emissiveIntensity: .55, roughness: .3 })); bulb.position.copy(curve.getPoint(1)); ant.add(bulb); turn.add(ant);
+
+  const cv = renderer.domElement; cv.className = 'l3d-cv'; cv.setAttribute('role', 'img'); cv.setAttribute('aria-label', 'LawApp maskotu (3D). Toxunun!');
+  box.replaceChildren(cv);
+  const size = () => { const w = box.clientWidth || 260, h = box.clientHeight || 240; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); if (reduce) renderer.render(scene, cam); };
+  size(); const ro = new ResizeObserver(size); ro.observe(box);
+
+  // ---- behaviour ----
+  const hearts = [], heartTex = heartTexture();
+  let t0 = performance.now(), px = 0, py = 0, ty = reduce ? -.25 : 0, ry = ty, tx = 0, rx = 0, drag = null, idleAt = 0, down = null;
+  let nextBlink = t0 + 2800, blinkAt = 0, nextWave = t0 + 3500, waveAt = 0, nextHop = t0 + 4500, hop = null, happyUntil = 0, alive = true, raf = 0;
+  const startHop = (now, h, dur) => { hop = { at: now, h, dur }; };
+  const poke = now => {
+    startHop(now, 1.05, 820); happyUntil = now + 1500; waveAt = now; nextWave = now + 5000;
+    for (let i = 0; i < 7; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: heartTex, transparent: true, depthWrite: false })); const sc = .22 + Math.random() * .2; s.scale.set(sc, sc, 1); s.position.set((Math.random() - .5) * 1.4, 2.5 + Math.random() * .6, .8 + Math.random() * .4); s.userData = { at: now + i * 70, vx: (Math.random() - .5) * .6, vy: .9 + Math.random() * .7 }; s.visible = false; scene.add(s); hearts.push(s); }
+  };
+  cv.style.touchAction = 'pan-y'; cv.style.cursor = 'pointer';
+  cv.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; drag = { x: e.clientX, ty, y: e.clientY, tx }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => {
+    const r = cv.getBoundingClientRect(); px = (e.clientX - r.left) / r.width * 2 - 1; py = (e.clientY - r.top) / r.height * 2 - 1;
+    if (drag && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { ty = Math.max(-1.3, Math.min(1.3, drag.ty + (e.clientX - drag.x) * .012)); tx = Math.max(-.35, Math.min(.35, drag.tx + (e.clientY - drag.y) * .006)); cv.style.cursor = 'grabbing'; }
+  });
+  const up = e => { const now = performance.now(); if (down && e.type === 'pointerup' && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 7 && now - down.t < 500 && !reduce) poke(now); down = drag = null; idleAt = now; cv.style.cursor = 'pointer'; };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('pointerleave', () => { px = py = 0; });
+
+  const frame = now => {
+    const t = (now - t0) / 1000;
+    // hop with squash and stretch
+    let hy = 0, sy = 1 + Math.sin(t * 2.2) * .012;
+    if (!hop && now > nextHop && !drag) { startHop(now, .32, 640); nextHop = now + 3800 + Math.random() * 2500; }
+    if (hop) {
+      const p = (now - hop.at) / hop.dur; if (p >= 1) hop = null; else { hy = hop.h * 4 * p * (1 - p); const sqz = Math.max(0, 1 - Math.min(p, 1 - p) / .14) * .13; sy = 1 - sqz + Math.sin(Math.PI * p) * .09; }
+    }
+    sq.scale.set(1 / Math.sqrt(sy), sy, 1 / Math.sqrt(sy)); root.position.y = hy; const k = 1 - Math.min(.6, hy * .5); shadow.scale.set(k, k, k); shadow.material.opacity = .5 + k * .5;
+    // look at the pointer / drag; ease back to a gentle sway
+    if (!drag && now - idleAt > 1800) { ty += (Math.sin(t * .6) * .18 - ty) * .03; tx += (0 - tx) * .05; }
+    ry += (ty + px * .35 - ry) * .12; rx += (tx + py * .12 - rx) * .12; turn.rotation.set(rx, ry, 0);
+    eyes.forEach(e => { e.position.x += (e.userData.x + px * .05 - e.position.x) * .2; e.position.y += (CY + e.userData.y - py * .04 - e.position.y) * .2; });
+    // blink / happy squint
+    if (now > nextBlink) { blinkAt = now; nextBlink = now + 2800 + Math.random() * 3200; }
+    let ey = 1; const happy = now < happyUntil;
+    if (blinkAt && now - blinkAt < 220) ey = Math.max(.08, Math.abs((now - blinkAt) / 110 - 1)); else blinkAt = 0;
+    if (happy) ey = Math.min(ey, .62); eyes.forEach(e => e.scale.set(happy ? 1.1 : 1, ey, 1));
+    smile.visible = !happy; open.visible = happy; cheeks.forEach(c => { c.material.opacity = happy ? .95 : .7; });
+    // arms: rest · wave · cheer
+    if (now > nextWave && !waveAt) { waveAt = now; nextWave = now + 5500 + Math.random() * 3000; }
+    arms.forEach(a => {
+      const s = a.userData.s; let z = s * (.55 + Math.sin(t * 2.2 + s) * .05);
+      if (happy) z = s * (2.5 + Math.sin(t * 16) * .18);
+      else if (s === 1 && waveAt) { const w = (now - waveAt) / 1700; if (w >= 1) waveAt = 0; else z = 2.35 + Math.sin(w * 28) * .32 * Math.sin(Math.PI * Math.min(1, w * 1.2)); }
+      a.rotation.z += (z - a.rotation.z) * .22;
+    });
+    ant.rotation.z = Math.sin(t * 2.4) * .1 - hy * .25 + (ty - ry) * .5; ant.rotation.x = Math.cos(t * 1.9) * .06;
+    // hearts
+    for (let i = hearts.length - 1; i >= 0; i--) {
+      const s = hearts[i], u = s.userData, age = (now - u.at) / 1000; if (age < 0) continue; s.visible = true;
+      s.position.x += u.vx * .016; s.position.y += u.vy * .016; s.material.opacity = Math.max(0, 1 - age / 1.3);
+      if (age > 1.3) { scene.remove(s); s.material.dispose(); hearts.splice(i, 1); }
+    }
+    renderer.render(scene, cam);
+  };
+  const tick = now => {
+    if (!alive) return;
+    if (!cv.isConnected) return dispose();   // the screen changed: stop and free the GPU
+    if (!document.hidden) frame(now);
+    raf = requestAnimationFrame(tick);
+  };
+  if (reduce) { turn.rotation.y = -.25; renderer.render(scene, cam); } else raf = requestAnimationFrame(tick);
+  function dispose() {
+    alive = false; cancelAnimationFrame(raf); ro.disconnect();
+    scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } });
+    pm.dispose(); renderer.dispose(); renderer.forceContextLoss();
+  }
+  return dispose;
+}
